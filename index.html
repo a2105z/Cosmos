@@ -39,7 +39,7 @@
         <section class="graph-section">
           <canvas id="graphCanvas"></canvas>
           <div id="traceTooltip" class="trace-tooltip hidden"></div>
-          <div id="coordDisplay" class="coord-display"></div>
+          <div id="coordDisplay" class="coord-display">Hover to trace</div>
         </section>
         <aside class="graph-sidebar">
           <h3>Y= Editor</h3>
@@ -66,79 +66,99 @@
     <!-- Statistics Mode -->
     <main id="statsMode" class="mode-panel">
       <div class="stats-layout">
-        <section class="stats-editor">
-          <h3>Data Editor (L₁–L₆)</h3>
-          <div class="list-editor list-grid">
-            <div class="list-col"><label>L₁</label><textarea id="listL1" placeholder="1, 2, 3, 4, 5" rows="4"></textarea></div>
-            <div class="list-col"><label>L₂</label><textarea id="listL2" placeholder="2, 4, 6, 8, 10" rows="4"></textarea></div>
-            <div class="list-col"><label>L₃</label><textarea id="listL3" placeholder="" rows="4"></textarea></div>
-            <div class="list-col"><label>L₄</label><textarea id="listL4" placeholder="" rows="4"></textarea></div>
-            <div class="list-col"><label>L₅</label><textarea id="listL5" placeholder="" rows="4"></textarea></div>
-            <div class="list-col"><label>L₆</label><textarea id="listL6" placeholder="" rows="4"></textarea></div>
+        <div class="stats-left">
+          <nav class="stats-tabs">
+            <button class="stats-tab active" data-stats-tab="data">Data & Calc</button>
+            <button class="stats-tab" data-stats-tab="probability">Probability</button>
+            <button class="stats-tab" data-stats-tab="tables">Tables</button>
+          </nav>
+          <div class="stats-tab-panels">
+            <section class="stats-tab-panel active" data-panel="data">
+              <h3>Data (L₁–L₆)</h3>
+              <div class="list-editor list-grid">
+                <div class="list-col"><label>L₁</label><textarea id="listL1" placeholder="1, 2, 3, 4, 5" rows="3"></textarea></div>
+                <div class="list-col"><label>L₂</label><textarea id="listL2" placeholder="2, 4, 6, 8, 10" rows="3"></textarea></div>
+                <div class="list-col"><label>L₃</label><textarea id="listL3" placeholder="" rows="3"></textarea></div>
+                <div class="list-col"><label>L₄</label><textarea id="listL4" placeholder="" rows="3"></textarea></div>
+                <div class="list-col"><label>L₅</label><textarea id="listL5" placeholder="" rows="3"></textarea></div>
+                <div class="list-col"><label>L₆</label><textarea id="listL6" placeholder="" rows="3"></textarea></div>
+              </div>
+              <h3>Descriptive Stats</h3>
+              <div class="stats-actions-grid">
+                <div class="stat-action-row">
+                  <select id="list1Var"><option value="1">L₁</option><option value="2">L₂</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select>
+                  <button id="btn1Var" class="btn primary">1-Var Stats</button>
+                </div>
+                <div class="stat-action-row">
+                  <select id="listX"><option value="1">L₁</option><option value="2">L₂</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select>
+                  <select id="listY"><option value="2">L₂</option><option value="1">L₁</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select>
+                  <button id="btn2Var" class="btn">2-Var</button>
+                  <button id="btnLinReg" class="btn">LinReg</button>
+                </div>
+                <div class="stat-action-row">
+                  <select id="listObs"><option value="1">L₁</option><option value="2">L₂</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select>
+                  <select id="listExp"><option value="2">L₂</option><option value="1">L₁</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select>
+                  <button id="btnChiSq" class="btn">χ² Test</button>
+                </div>
+              </div>
+              <details class="formulas-details">
+                <summary>AP Stats formulas</summary>
+                <div class="formulas-ref">
+                  <p><b>Descriptive:</b> x̄=Σx/n, s=√(Σ(x-x̄)²/(n-1)), ŷ=a+bx</p>
+                  <p><b>χ²:</b> χ²=Σ(obs-exp)²/exp</p>
+                  <p><b>CI:</b> stat ± (critical)×(SE)</p>
+                </div>
+              </details>
+            </section>
+            <section class="stats-tab-panel" data-panel="probability">
+              <h3>Binomial</h3>
+              <p class="panel-desc">P(X=x) for Binomial(n, p)</p>
+              <div class="input-row">
+                <input type="number" id="binomN" placeholder="n" min="1" title="trials">
+                <input type="number" id="binomP" placeholder="p" min="0" max="1" step="0.01" title="probability">
+                <input type="number" id="binomX" placeholder="x" min="0" title="successes">
+                <button id="btnBinom" class="btn primary">Compute</button>
+              </div>
+              <h3>Geometric</h3>
+              <p class="panel-desc">P(X=x) for Geometric(p)</p>
+              <div class="input-row">
+                <input type="number" id="geomP" placeholder="p" min="0" max="1" step="0.01" title="probability">
+                <input type="number" id="geomX" placeholder="x" min="1" title="trials until success">
+                <button id="btnGeom" class="btn primary">Compute</button>
+              </div>
+              <div class="formulas-ref">
+                <p><b>Binomial:</b> P(X=x)=C(n,x)pˣ(1-p)ⁿ⁻ˣ</p>
+                <p><b>Geometric:</b> P(X=x)=(1-p)ˣ⁻¹p</p>
+              </div>
+            </section>
+            <section class="stats-tab-panel" data-panel="tables">
+              <h3>Z-table</h3>
+              <p class="panel-desc">P(Z &lt; z) and P(Z &gt; z)</p>
+              <div class="input-row">
+                <input type="number" id="zVal" placeholder="z" step="0.01">
+                <button id="btnZTable" class="btn primary">Lookup</button>
+              </div>
+              <h3>t-table</h3>
+              <p class="panel-desc">Critical value t* for confidence interval</p>
+              <div class="input-row">
+                <input type="number" id="tDf" placeholder="df" min="1">
+                <select id="tConf"><option value="0.90">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select>
+                <button id="btnTTable" class="btn primary">t*</button>
+              </div>
+              <h3>χ²-table</h3>
+              <p class="panel-desc">Critical value χ² for chi-square test</p>
+              <div class="input-row">
+                <input type="number" id="chiDf" placeholder="df" min="1">
+                <select id="chiTail"><option value="0.10">p=0.10</option><option value="0.05" selected>p=0.05</option><option value="0.01">p=0.01</option></select>
+                <button id="btnChiTable" class="btn primary">χ²*</button>
+              </div>
+            </section>
           </div>
-          <div class="stats-actions">
-            <span class="list-pick"><label>1-Var:</label><select id="list1Var"><option value="1">L₁</option><option value="2">L₂</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select></span>
-            <button id="btn1Var" class="btn primary">1-Var Stats</button>
-            <span class="list-pick"><label>X:</label><select id="listX"><option value="1">L₁</option><option value="2">L₂</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select></span>
-            <span class="list-pick"><label>Y:</label><select id="listY"><option value="2">L₂</option><option value="1">L₁</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select></span>
-            <button id="btn2Var" class="btn">2-Var Stats</button>
-            <button id="btnLinReg" class="btn">LinReg</button>
-            <span class="list-pick"><label>Obs:</label><select id="listObs"><option value="1">L₁</option><option value="2">L₂</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select></span>
-            <span class="list-pick"><label>Exp:</label><select id="listExp"><option value="2">L₂</option><option value="1">L₁</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select></span>
-            <button id="btnChiSq" class="btn">χ² Test</button>
-          </div>
-          <div class="stats-subsection">
-            <h4>Probability</h4>
-            <div class="prob-row">
-              <span>Binomial P(X=x):</span>
-              <input type="number" id="binomN" placeholder="n" min="1" style="width:50px">
-              <input type="number" id="binomP" placeholder="p" min="0" max="1" step="0.01" style="width:60px">
-              <input type="number" id="binomX" placeholder="x" min="0" style="width:50px">
-              <button id="btnBinom" class="btn small">Compute</button>
-            </div>
-            <div class="prob-row">
-              <span>Geometric P(X=x):</span>
-              <input type="number" id="geomP" placeholder="p" min="0" max="1" step="0.01" style="width:60px">
-              <input type="number" id="geomX" placeholder="x" min="1" style="width:50px">
-              <button id="btnGeom" class="btn small">Compute</button>
-            </div>
-          </div>
-          <div class="stats-subsection">
-            <h4>Table Lookups</h4>
-            <div class="table-row">
-              <span>Z-table:</span>
-              <input type="number" id="zVal" placeholder="z" step="0.01" style="width:70px">
-              <button id="btnZTable" class="btn small">P(Z&lt;z)</button>
-            </div>
-            <div class="table-row">
-              <span>t-table:</span>
-              <input type="number" id="tDf" placeholder="df" min="1" style="width:50px">
-              <select id="tConf"><option value="0.90">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select>
-              <button id="btnTTable" class="btn small">t*</button>
-            </div>
-            <div class="table-row">
-              <span>χ²-table:</span>
-              <input type="number" id="chiDf" placeholder="df" min="1" style="width:50px">
-              <select id="chiTail"><option value="0.10">p=0.10</option><option value="0.05" selected>p=0.05</option><option value="0.01">p=0.01</option></select>
-              <button id="btnChiTable" class="btn small">χ²*</button>
-            </div>
-          </div>
-          <details class="stats-subsection">
-            <summary>AP Stats Formulas</summary>
-            <div class="formulas-ref">
-              <p><b>Descriptive:</b> x̄=Σx/n, s=√(Σ(x-x̄)²/(n-1)), ŷ=a+bx</p>
-              <p><b>Probability:</b> P(A∪B)=P(A)+P(B)-P(A∩B), P(A|B)=P(A∩B)/P(B)</p>
-              <p><b>Binomial:</b> P(X=x)=C(n,x)pˣ(1-p)ⁿ⁻ˣ, μ=np, σ=√(np(1-p))</p>
-              <p><b>Geometric:</b> P(X=x)=(1-p)ˣ⁻¹p, μ=1/p, σ=(1-p)/p</p>
-              <p><b>χ² test:</b> χ²=Σ(obs-exp)²/exp</p>
-              <p><b>CI:</b> statistic ± (critical value)×(SE)</p>
-            </div>
-          </details>
-        </section>
+        </div>
         <section class="stats-output">
           <h3>Results</h3>
           <pre id="statsResults" class="stats-results">Enter data and run a calculation.</pre>
-          <button id="btnCopyResults" class="btn small" style="margin-top:8px">Copy to clipboard</button>
+          <button id="btnCopyResults" class="btn small">Copy</button>
         </section>
         <section class="stats-plot">
           <h3>Plot</h3>

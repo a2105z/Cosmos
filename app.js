@@ -293,6 +293,7 @@ function setupGraphCanvas() {
   canvas.addEventListener('mouseleave', () => {
     state.isPanning = false;
     traceTooltip.classList.add('hidden');
+    coordDisplay.textContent = 'Hover to trace';
   });
   canvas.addEventListener('mouseup', e => { if (e.button === 0) state.isPanning = false; });
   canvas.addEventListener('wheel', e => {
@@ -482,6 +483,16 @@ function getList(num) {
   const el = document.getElementById('listL' + num);
   return el ? parseList(el.value) : [];
 }
+
+// Stats tab switching
+document.querySelectorAll('.stats-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.stats-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.stats-tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelector(`.stats-tab-panel[data-panel="${tab.dataset.statsTab}"]`).classList.add('active');
+  });
+});
 
 document.getElementById('btn1Var').addEventListener('click', async () => {
   const listNum = document.getElementById('list1Var').value;
