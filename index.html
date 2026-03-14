@@ -3,102 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="GraphForge — A modern TI-84 inspired graphing calculator. Clean, Desmos-like, in your browser.">
-  <title>GraphForge — Graphing Calculator</title>
+  <meta name="description" content="Cosmos — A pure TI-84 graphing calculator. Graphing, statistics, and scientific math in one beautiful interface.">
+  <title>Cosmos — Graphing Calculator</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="app">
     <header class="header">
-      <h1 class="logo">GraphForge</h1>
+      <h1 class="logo">Cosmos</h1>
+      <nav class="mode-tabs">
+        <button class="tab active" data-mode="calc">Calculator</button>
+        <button class="tab" data-mode="graph">Graph</button>
+        <button class="tab" data-mode="stats">Statistics</button>
+      </nav>
       <div class="header-controls">
-        <button id="angleMode" class="mode-btn" title="Switch RAD/DEG">RAD</button>
-        <button id="windowBtn" class="mode-btn" title="Window settings">Window</button>
-        <button id="zoomFit" class="mode-btn" title="Fit to standard view">Zoom Std</button>
+        <button id="angleMode" class="mode-btn" title="RAD/DEG">RAD</button>
       </div>
     </header>
 
-    <main class="main">
-      <section class="graph-section">
-        <canvas id="graphCanvas"></canvas>
-        <div id="traceTooltip" class="trace-tooltip hidden"></div>
-        <div id="coordDisplay" class="coord-display"></div>
-      </section>
+    <!-- Calculator Mode -->
+    <main id="calcMode" class="mode-panel active">
+      <div class="display-panel">
+        <div id="exprDisplay" class="expr-display"></div>
+        <div id="resultDisplay" class="result-display">0</div>
+      </div>
+      <div class="keypad" id="calcKeypad"></div>
+    </main>
 
-      <section class="functions-section">
-        <h3 class="section-title">Functions</h3>
-        <div id="functionList" class="function-list">
-          <div class="function-row" data-index="0">
-            <span class="func-label">y₁</span>
-            <input type="text" class="func-input" placeholder="e.g. x^2 or sin(x)" data-index="0">
+    <!-- Graph Mode -->
+    <main id="graphMode" class="mode-panel">
+      <div class="graph-layout">
+        <section class="graph-section">
+          <canvas id="graphCanvas"></canvas>
+          <div id="traceTooltip" class="trace-tooltip hidden"></div>
+          <div id="coordDisplay" class="coord-display"></div>
+        </section>
+        <aside class="graph-sidebar">
+          <h3>Y= Editor</h3>
+          <div id="functionList" class="function-list">
+            <div class="function-row" data-index="0"><span class="func-label">y₁</span><input type="text" class="func-input" placeholder="x²" data-index="0"></div>
+            <div class="function-row" data-index="1"><span class="func-label">y₂</span><input type="text" class="func-input" placeholder="sin(x)" data-index="1"></div>
+            <div class="function-row" data-index="2"><span class="func-label">y₃</span><input type="text" class="func-input" placeholder="" data-index="2"></div>
+            <div class="function-row" data-index="3"><span class="func-label">y₄</span><input type="text" class="func-input" placeholder="" data-index="3"></div>
           </div>
-          <div class="function-row" data-index="1">
-            <span class="func-label">y₂</span>
-            <input type="text" class="func-input" placeholder="e.g. 2x + 1" data-index="1">
+          <div class="graph-controls">
+            <button id="windowBtn" class="btn small">Window</button>
+            <button id="zoomFit" class="btn small">Zoom Std</button>
           </div>
-          <div class="function-row" data-index="2">
-            <span class="func-label">y₃</span>
-            <input type="text" class="func-input" placeholder="e.g. cos(x)" data-index="2">
+        </aside>
+      </div>
+    </main>
+
+    <!-- Statistics Mode -->
+    <main id="statsMode" class="mode-panel">
+      <div class="stats-layout">
+        <section class="stats-editor">
+          <h3>Data Editor</h3>
+          <div class="list-editor">
+            <div class="list-col">
+              <label>L₁</label>
+              <textarea id="listL1" placeholder="1, 2, 3, 4, 5" rows="6"></textarea>
+            </div>
+            <div class="list-col">
+              <label>L₂</label>
+              <textarea id="listL2" placeholder="2, 4, 6, 8, 10" rows="6"></textarea>
+            </div>
           </div>
-          <div class="function-row" data-index="3">
-            <span class="func-label">y₄</span>
-            <input type="text" class="func-input" placeholder="e.g. sqrt(x)" data-index="3">
+          <div class="stats-actions">
+            <button id="btn1Var" class="btn primary">1-Var Stats</button>
+            <button id="btn2Var" class="btn">2-Var Stats</button>
+            <button id="btnLinReg" class="btn">LinReg</button>
           </div>
-        </div>
-      </section>
-
-      <section class="calc-section">
-        <div class="display-panel">
-          <div id="exprDisplay" class="expr-display"></div>
-          <div id="resultDisplay" class="result-display">0</div>
-        </div>
-
-        <div class="keypad">
-          <button class="btn btn-fn" data-action="clear">Clear</button>
-          <button class="btn btn-fn" data-action="del">Del</button>
-          <button class="btn btn-op" data-action="(">(</button>
-          <button class="btn btn-op" data-action=")">)</button>
-          <button class="btn btn-sci" data-action="sin(">sin</button>
-
-          <button class="btn btn-num" data-action="7">7</button>
-          <button class="btn btn-num" data-action="8">8</button>
-          <button class="btn btn-num" data-action="9">9</button>
-          <button class="btn btn-op" data-action="/">÷</button>
-          <button class="btn btn-sci" data-action="cos(">cos</button>
-
-          <button class="btn btn-num" data-action="4">4</button>
-          <button class="btn btn-num" data-action="5">5</button>
-          <button class="btn btn-num" data-action="6">6</button>
-          <button class="btn btn-op" data-action="*">×</button>
-          <button class="btn btn-sci" data-action="tan(">tan</button>
-
-          <button class="btn btn-num" data-action="1">1</button>
-          <button class="btn btn-num" data-action="2">2</button>
-          <button class="btn btn-num" data-action="3">3</button>
-          <button class="btn btn-op" data-action="-">−</button>
-          <button class="btn btn-sci" data-action="log(">log</button>
-
-          <button class="btn btn-num" data-action="0">0</button>
-          <button class="btn btn-num" data-action=".">.</button>
-          <button class="btn btn-op" data-action="^">^</button>
-          <button class="btn btn-op" data-action="+">+</button>
-          <button class="btn btn-sci" data-action="ln(">ln</button>
-
-          <button class="btn btn-sci" data-action="sqrt(">√</button>
-          <button class="btn btn-sci" data-action="abs(">abs</button>
-          <button class="btn btn-sci" data-action="x">x</button>
-          <button class="btn btn-sci" data-action="exp(">exp</button>
-          <button class="btn btn-sci" data-action="**2">x²</button>
-
-          <button class="btn btn-const" data-action="pi">π</button>
-          <button class="btn btn-const" data-action="e">e</button>
-          <button class="btn btn-special" data-action="ans">Ans</button>
-          <button class="btn btn-equals" data-action="enter">Enter</button>
-        </div>
-      </section>
+        </section>
+        <section class="stats-output">
+          <h3>Results</h3>
+          <pre id="statsResults" class="stats-results">Enter data and run a calculation.</pre>
+        </section>
+        <section class="stats-plot">
+          <h3>Plot</h3>
+          <div class="plot-type">
+            <button class="btn small active" data-plot="scatter">Scatter</button>
+            <button class="btn small" data-plot="histogram">Histogram</button>
+          </div>
+          <canvas id="statsCanvas"></canvas>
+        </section>
+      </div>
     </main>
 
     <div id="windowModal" class="modal hidden">
@@ -111,7 +103,7 @@
           <label>Ymax <input type="number" id="yMax" step="any" value="10"></label>
         </div>
         <div class="modal-actions">
-          <button id="windowApply" class="btn btn-primary">Apply</button>
+          <button id="windowApply" class="btn primary">Apply</button>
           <button id="windowClose" class="btn">Close</button>
         </div>
       </div>

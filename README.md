@@ -1,48 +1,74 @@
-# GraphForge
+# Cosmos
 
-A modern, TI-84 inspired graphing calculator — clean like Desmos, with the feel of a classic calculator. Built as a lightweight web app.
+A pure TI-84 graphing calculator — Calculator, Graph, and Statistics modes with a Python backend and professional web interface.
 
-**[Launch GraphForge →](https://a2105z.github.io/GraphForge/)**
-
-![GraphForge](https://img.shields.io/badge/GraphForge-Graphing%20Calculator-00C853)
+**[Launch Cosmos →](https://a2105z.github.io/GraphForge/)**
 
 ## Features
 
-- **Dual mode** — Scientific calculator + graphing
-- **Multiple functions** — Graph up to 4 functions (y₁–y₄) simultaneously
-- **Desmos-like interactions** — Pan (drag), zoom (scroll wheel), trace (hover)
-- **Window settings** — Customize X/Y ranges
-- **Scientific functions** — sin, cos, tan, log, ln, sqrt, exp, abs
-- **Angle modes** — RAD / DEG
-- **TI-84 aesthetic** — Dark gray keypad, clean display
+### Calculator
+- Scientific: sin, cos, tan, log, ln, sqrt, exp, abs
+- Constants: π, e
+- RAD / DEG modes
+- Ans key
+
+### Graph
+- 4 function slots (y₁–y₄)
+- Pan (drag), zoom (scroll), trace (hover)
+- Window settings
+- TI-84 Y= editor style
+
+### Statistics
+- Data editor: L₁, L₂ (comma or space separated)
+- 1-Var Stats: mean, std dev, min, max, median, sum
+- 2-Var Stats: means, std devs, sums
+- LinReg: linear regression with R²
+- Scatter plot with regression line
+- Histogram
 
 ## Run locally
 
+### Frontend only (no backend)
 ```bash
-# Serve with Python
 python -m http.server 8080
+# Open http://localhost:8080
+```
+Statistics work fully in the browser (client-side fallback).
 
-# Or with Node
-npx serve .
+### Full stack (with Python backend)
+```bash
+# Terminal 1: Backend
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+
+# Terminal 2: Frontend
+python -m http.server 8080
+```
+Then open `http://localhost:8080` and set `COSMOS_API = 'http://localhost:8000'` in the console if you want to use the backend (optional; stats work client-side).
+
+## Project structure
+
+```
+├── index.html
+├── styles.css
+├── app.js
+├── backend/
+│   ├── main.py      # FastAPI: /api/evaluate, /api/stats/*
+│   └── requirements.txt
+└── README.md
 ```
 
-## Syntax
+## API (Python backend)
 
-| Input | Meaning |
-|-------|---------|
-| `^` or `**` | Power |
-| `sin`, `cos`, `tan` | Trig (respects RAD/DEG) |
-| `log` | Base-10 logarithm |
-| `ln` | Natural logarithm |
-| `sqrt`, `abs`, `exp` | Standard functions |
-| `pi`, `e` | Constants |
+| Endpoint | Body | Returns |
+|----------|------|---------|
+| `POST /api/evaluate` | `{expression, x?, angle_mode?}` | `{result}` |
+| `POST /api/stats/1-var` | `{data: number[]}` | n, mean, stdDev, min, max, median, sum |
+| `POST /api/stats/2-var` | `{x: number[], y: number[]}` | n, meanX, meanY, ... |
+| `POST /api/stats/linreg` | `{x: number[], y: number[]}` | a, b, r, r², equation |
 
 ## Deploy
 
-This repo is set up for GitHub Pages. Push to `main` and enable Pages:
-
-1. **Settings** → **Pages**
-2. **Source:** Deploy from a branch
-3. **Branch:** `main`, **Folder:** `/ (root)`
-
-Live at: `https://a2105z.github.io/GraphForge/`
+- **Frontend:** GitHub Pages (automatic via Actions)
+- **Backend:** Deploy to Render, Railway, or similar; set `COSMOS_API` in frontend
