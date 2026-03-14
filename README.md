@@ -2,7 +2,7 @@
 
 A pure TI-84 graphing calculator — Calculator, Graph, and Statistics modes with a Python backend and professional web interface.
 
-**[Launch Cosmos →](https://a2105z.github.io/GraphForge/)**
+**[Launch Cosmos →](https://a2105z.github.io/Cosmos/)**
 
 ## Features
 
