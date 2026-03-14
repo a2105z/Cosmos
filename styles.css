@@ -266,6 +266,16 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+.function-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
 }
 
 .graph-sidebar h3,
@@ -279,7 +289,6 @@ body {
   letter-spacing: 0.05em;
 }
 
-.function-list { display: flex; flex-direction: column; gap: 8px; }
 .function-row { display: flex; align-items: center; gap: 8px; }
 .func-label { font-family: var(--font-mono); font-size: 0.85rem; min-width: 28px; color: var(--accent); }
 

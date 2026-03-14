@@ -16,7 +16,7 @@ const state = {
   plotType: 'scatter',
 };
 
-const GRAPH_COLORS = ['#58a6ff', '#f85149', '#3fb950', '#a371f7'];
+const GRAPH_COLORS = ['#58a6ff', '#f85149', '#3fb950', '#a371f7', '#f0b429', '#79c0ff', '#ff7b72', '#56d364', '#d2a8ff', '#ffa657'];
 const KEYPAD = [
   [{ txt: 'Clear', action: 'clear', cls: 'btn-fn' }, { txt: 'Del', action: 'del', cls: 'btn-fn' }, { txt: '(', action: '(', cls: 'btn-op' }, { txt: ')', action: ')', cls: 'btn-op' }, { txt: 'sin', action: 'sin(', cls: 'btn-sci' }],
   [{ txt: '7', action: '7', cls: 'btn-num' }, { txt: '8', action: '8', cls: 'btn-num' }, { txt: '9', action: '9', cls: 'btn-num' }, { txt: '÷', action: '/', cls: 'btn-op' }, { txt: 'cos', action: 'cos(', cls: 'btn-sci' }],
@@ -45,7 +45,12 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById(tab.dataset.mode + 'Mode').classList.add('active');
-    if (tab.dataset.mode === 'graph') setTimeout(redraw, 50);
+    if (tab.dataset.mode === 'graph') {
+      setTimeout(() => {
+        if (window.cosmosGraphResize) window.cosmosGraphResize();
+        redraw();
+      }, 100);
+    }
     if (tab.dataset.mode === 'stats') drawStatsPlot();
   });
 });
@@ -71,7 +76,12 @@ function buildKeypad() {
 
 function toMathJS(expr) {
   if (!expr || typeof expr !== 'string') return '';
-  return expr.replace(/\^/g, '**').replace(/ln\(/g, 'LOG_').replace(/log\(/g, 'log10(').replace(/LOG_/g, 'log(');
+  return expr
+    .replace(/\^/g, '**')
+    .replace(/²/g, '**2')
+    .replace(/ln\(/g, 'LOG_')
+    .replace(/log\(/g, 'log10(')
+    .replace(/LOG_/g, 'log(');
 }
 
 function evaluateExpr(expr, xVal = null) {
@@ -90,8 +100,12 @@ function evaluateExpr(expr, xVal = null) {
   } catch { return null; }
 }
 
-function isFunction(expr) {
+function hasVariableX(expr) {
   return typeof expr === 'string' && expr.includes('x') && /[a-zA-Z]*x[a-zA-Z]*/.test(expr);
+}
+
+function isGraphable(expr) {
+  return typeof expr === 'string' && expr.trim().length > 0;
 }
 
 function updateDisplay() {
@@ -110,7 +124,7 @@ function handleCalcAction(action) {
   if (action === 'ans') { appendToExpr(String(state.lastAnswer)); return; }
   if (action === 'enter') {
     if (!state.expression.trim()) return;
-    if (isFunction(state.expression)) return;
+    if (hasVariableX(state.expression)) return;
     const r = evaluateExpr(state.expression);
     if (r !== null && Number.isFinite(r)) {
       state.lastAnswer = r;
@@ -141,6 +155,7 @@ function toWorldY(py) {
 }
 
 function drawGrid() {
+  if (!ctx || !canvasWidth || !canvasHeight) return;
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   const [xMin, xMax] = state.xRange;
   const [yMin, yMax] = state.yRange;
@@ -181,9 +196,10 @@ function drawGrid() {
 }
 
 function plotFunction(expr, color) {
-  if (!expr || !isFunction(expr)) return;
+  if (!expr || !isGraphable(expr) || !canvasWidth || !canvasHeight) return;
   const [xMin, xMax] = state.xRange;
-  const n = Math.min(600, Math.max(200, canvasWidth));
+  const [yMin, yMax] = state.yRange;
+  const n = Math.min(800, Math.max(200, Math.max(canvasWidth, 200)));
   const dx = (xMax - xMin) / n;
   ctx.strokeStyle = color;
   ctx.lineWidth = 2;
@@ -193,12 +209,16 @@ function plotFunction(expr, color) {
   let first = true;
   for (let i = 0; i <= n; i++) {
     const x = xMin + i * dx;
-    const y = evaluateExpr(expr, x);
-    if (y === null || !Number.isFinite(y) || y < state.yRange[0] - 20 || y > state.yRange[1] + 20) {
+    const y = hasVariableX(expr) ? evaluateExpr(expr, x) : evaluateExpr(expr, null);
+    if (y === null || !Number.isFinite(y)) {
       first = true;
       continue;
     }
     const px = mapX(x), py = mapY(y);
+    if (py < -50 || py > canvasHeight + 50) {
+      first = true;
+      continue;
+    }
     if (first) { ctx.moveTo(px, py); first = false; }
     else ctx.lineTo(px, py);
   }
@@ -209,7 +229,7 @@ function redraw() {
   drawGrid();
   document.querySelectorAll('.func-input').forEach((input, i) => {
     const expr = input.value.trim();
-    if (expr && isFunction(expr)) plotFunction(expr, GRAPH_COLORS[i % GRAPH_COLORS.length]);
+    if (expr && isGraphable(expr)) plotFunction(expr, GRAPH_COLORS[i % GRAPH_COLORS.length]);
   });
 }
 
@@ -218,18 +238,21 @@ function setupGraphCanvas() {
   ctx = canvas.getContext('2d');
   function resize() {
     const rect = graphCanvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
     const dpr = window.devicePixelRatio || 1;
     canvasWidth = Math.floor(rect.width);
     canvasHeight = Math.floor(rect.height);
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
     ctx.scale(dpr, dpr);
     canvas.style.width = rect.width + 'px';
     canvas.style.height = rect.height + 'px';
     redraw();
   }
+  window.cosmosGraphResize = resize;
   window.addEventListener('resize', resize);
-  resize();
+  if (document.getElementById('graphMode').classList.contains('active')) resize();
   canvas.addEventListener('mousedown', e => {
     if (e.button === 0) {
       state.isPanning = true;
@@ -254,8 +277,8 @@ function setupGraphCanvas() {
       let txt = '';
       document.querySelectorAll('.func-input').forEach((input, i) => {
         const expr = input.value.trim();
-        if (expr && isFunction(expr)) {
-          const y = evaluateExpr(expr, wx);
+        if (expr && isGraphable(expr)) {
+          const y = hasVariableX(expr) ? evaluateExpr(expr, wx) : evaluateExpr(expr);
           if (y !== null && Number.isFinite(y)) txt += `y${i + 1}: (${wx.toFixed(2)}, ${y.toFixed(2)})\n`;
         }
       });
