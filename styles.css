@@ -1,4 +1,4 @@
-/* Cosmos — TI-84 Graphing Calculator
+/* Cosmos — Graphing Calculator
    Professional, refined, scientific aesthetic */
 
 :root {
@@ -337,6 +337,71 @@ body {
   margin: 12px 0 16px;
 }
 
+.list-editor.list-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.stats-subsection {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.stats-subsection h4 {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.prob-row, .table-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.prob-row span, .table-row span {
+  font-size: 0.85rem;
+  min-width: 140px;
+}
+
+.prob-row input, .table-row input,
+.table-row select {
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  background: var(--display-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+}
+
+details summary {
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: var(--accent);
+  user-select: none;
+}
+
+.formulas-ref {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+.formulas-ref p { margin: 4px 0; }
+
+@media (max-width: 900px) {
+  .list-editor.list-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 .list-col {
   flex: 1;
   display: flex;
@@ -364,7 +429,19 @@ body {
 
 .list-col textarea:focus { border-color: var(--accent); }
 
-.stats-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.stats-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.list-pick { display: flex; align-items: center; gap: 4px; }
+.list-pick label { font-size: 0.7rem; color: var(--text-muted); }
+.list-pick select {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  background: var(--display-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  min-width: 48px;
+}
 
 .stats-output {
   background: var(--bg-panel);

@@ -1,6 +1,6 @@
 # Cosmos
 
-A pure TI-84 graphing calculator — Calculator, Graph, and Statistics modes with a Python backend and professional web interface.
+Cosmos — A graphing calculator with Calculator, Graph, and Statistics modes (including AP Stats), Python backend, and professional web interface.
 
 **[Launch Cosmos →](https://a2105z.github.io/Cosmos/)**
 
@@ -16,15 +16,16 @@ A pure TI-84 graphing calculator — Calculator, Graph, and Statistics modes wit
 - 4 function slots (y₁–y₄)
 - Pan (drag), zoom (scroll), trace (hover)
 - Window settings
-- TI-84 Y= editor style
+- TI-84 style Y= editor
 
 ### Statistics
-- Data editor: L₁, L₂ (comma or space separated)
-- 1-Var Stats: mean, std dev, min, max, median, sum
-- 2-Var Stats: means, std devs, sums
-- LinReg: linear regression with R²
-- Scatter plot with regression line
-- Histogram
+- Data editor: L₁–L₆ (comma or space separated)
+- 1-Var Stats: mean, σ/s, variance, min, max, median, Q1, Q3, IQR
+- 2-Var Stats, LinReg: linear regression with R²
+- χ² test (observed vs expected)
+- Binomial & Geometric probability
+- Table lookups: Z, t, χ²
+- Scatter plot, histogram
 
 ## Run locally
 

@@ -1,5 +1,5 @@
 """
-Cosmos — TI-84 Graphing Calculator API
+Cosmos — Graphing Calculator API
 Python backend for expression evaluation, statistics, and regression.
 """
 import math
@@ -60,7 +60,7 @@ def evaluate_expr(expr: str, x_val: Optional[float] = None, angle_mode: str = "R
         raise ValueError(str(e))
 
 
-# --- Statistics (TI-84 style) ---
+# --- Statistics ---
 def one_var_stats(data: list[float]) -> dict:
     """1-Var Stats: mean, std dev, min, max, median, sum, count."""
     arr = np.array([float(x) for x in data])

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Cosmos — A pure TI-84 graphing calculator. Graphing, statistics, and scientific math in one beautiful interface.">
+  <meta name="description" content="Cosmos — Graphing calculator. Calculator, Graph, and Statistics modes with AP Stats support in one beautiful interface.">
   <title>Cosmos — Graphing Calculator</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -67,26 +67,78 @@
     <main id="statsMode" class="mode-panel">
       <div class="stats-layout">
         <section class="stats-editor">
-          <h3>Data Editor</h3>
-          <div class="list-editor">
-            <div class="list-col">
-              <label>L₁</label>
-              <textarea id="listL1" placeholder="1, 2, 3, 4, 5" rows="6"></textarea>
-            </div>
-            <div class="list-col">
-              <label>L₂</label>
-              <textarea id="listL2" placeholder="2, 4, 6, 8, 10" rows="6"></textarea>
-            </div>
+          <h3>Data Editor (L₁–L₆)</h3>
+          <div class="list-editor list-grid">
+            <div class="list-col"><label>L₁</label><textarea id="listL1" placeholder="1, 2, 3, 4, 5" rows="4"></textarea></div>
+            <div class="list-col"><label>L₂</label><textarea id="listL2" placeholder="2, 4, 6, 8, 10" rows="4"></textarea></div>
+            <div class="list-col"><label>L₃</label><textarea id="listL3" placeholder="" rows="4"></textarea></div>
+            <div class="list-col"><label>L₄</label><textarea id="listL4" placeholder="" rows="4"></textarea></div>
+            <div class="list-col"><label>L₅</label><textarea id="listL5" placeholder="" rows="4"></textarea></div>
+            <div class="list-col"><label>L₆</label><textarea id="listL6" placeholder="" rows="4"></textarea></div>
           </div>
           <div class="stats-actions">
+            <span class="list-pick"><label>1-Var:</label><select id="list1Var"><option value="1">L₁</option><option value="2">L₂</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select></span>
             <button id="btn1Var" class="btn primary">1-Var Stats</button>
+            <span class="list-pick"><label>X:</label><select id="listX"><option value="1">L₁</option><option value="2">L₂</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select></span>
+            <span class="list-pick"><label>Y:</label><select id="listY"><option value="2">L₂</option><option value="1">L₁</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select></span>
             <button id="btn2Var" class="btn">2-Var Stats</button>
             <button id="btnLinReg" class="btn">LinReg</button>
+            <span class="list-pick"><label>Obs:</label><select id="listObs"><option value="1">L₁</option><option value="2">L₂</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select></span>
+            <span class="list-pick"><label>Exp:</label><select id="listExp"><option value="2">L₂</option><option value="1">L₁</option><option value="3">L₃</option><option value="4">L₄</option><option value="5">L₅</option><option value="6">L₆</option></select></span>
+            <button id="btnChiSq" class="btn">χ² Test</button>
           </div>
+          <div class="stats-subsection">
+            <h4>Probability</h4>
+            <div class="prob-row">
+              <span>Binomial P(X=x):</span>
+              <input type="number" id="binomN" placeholder="n" min="1" style="width:50px">
+              <input type="number" id="binomP" placeholder="p" min="0" max="1" step="0.01" style="width:60px">
+              <input type="number" id="binomX" placeholder="x" min="0" style="width:50px">
+              <button id="btnBinom" class="btn small">Compute</button>
+            </div>
+            <div class="prob-row">
+              <span>Geometric P(X=x):</span>
+              <input type="number" id="geomP" placeholder="p" min="0" max="1" step="0.01" style="width:60px">
+              <input type="number" id="geomX" placeholder="x" min="1" style="width:50px">
+              <button id="btnGeom" class="btn small">Compute</button>
+            </div>
+          </div>
+          <div class="stats-subsection">
+            <h4>Table Lookups</h4>
+            <div class="table-row">
+              <span>Z-table:</span>
+              <input type="number" id="zVal" placeholder="z" step="0.01" style="width:70px">
+              <button id="btnZTable" class="btn small">P(Z&lt;z)</button>
+            </div>
+            <div class="table-row">
+              <span>t-table:</span>
+              <input type="number" id="tDf" placeholder="df" min="1" style="width:50px">
+              <select id="tConf"><option value="0.90">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select>
+              <button id="btnTTable" class="btn small">t*</button>
+            </div>
+            <div class="table-row">
+              <span>χ²-table:</span>
+              <input type="number" id="chiDf" placeholder="df" min="1" style="width:50px">
+              <select id="chiTail"><option value="0.10">p=0.10</option><option value="0.05" selected>p=0.05</option><option value="0.01">p=0.01</option></select>
+              <button id="btnChiTable" class="btn small">χ²*</button>
+            </div>
+          </div>
+          <details class="stats-subsection">
+            <summary>AP Stats Formulas</summary>
+            <div class="formulas-ref">
+              <p><b>Descriptive:</b> x̄=Σx/n, s=√(Σ(x-x̄)²/(n-1)), ŷ=a+bx</p>
+              <p><b>Probability:</b> P(A∪B)=P(A)+P(B)-P(A∩B), P(A|B)=P(A∩B)/P(B)</p>
+              <p><b>Binomial:</b> P(X=x)=C(n,x)pˣ(1-p)ⁿ⁻ˣ, μ=np, σ=√(np(1-p))</p>
+              <p><b>Geometric:</b> P(X=x)=(1-p)ˣ⁻¹p, μ=1/p, σ=(1-p)/p</p>
+              <p><b>χ² test:</b> χ²=Σ(obs-exp)²/exp</p>
+              <p><b>CI:</b> statistic ± (critical value)×(SE)</p>
+            </div>
+          </details>
         </section>
         <section class="stats-output">
           <h3>Results</h3>
           <pre id="statsResults" class="stats-results">Enter data and run a calculation.</pre>
+          <button id="btnCopyResults" class="btn small" style="margin-top:8px">Copy to clipboard</button>
         </section>
         <section class="stats-plot">
           <h3>Plot</h3>

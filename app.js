@@ -1,5 +1,5 @@
 /**
- * Cosmos — TI-84 Graphing Calculator
+ * Cosmos — Graphing Calculator
  * Calculator, Graph, and Statistics modes
  */
 const API_BASE = typeof COSMOS_API !== 'undefined' ? COSMOS_API : '';
@@ -77,8 +77,8 @@ function buildKeypad() {
 function toMathJS(expr) {
   if (!expr || typeof expr !== 'string') return '';
   return expr
-    .replace(/\^/g, '**')
-    .replace(/²/g, '**2')
+    .replace(/²/g, '^2')
+    .replace(/\*\*/g, '^')
     .replace(/ln\(/g, 'LOG_')
     .replace(/log\(/g, 'log10(')
     .replace(/LOG_/g, 'log(');
@@ -335,18 +335,22 @@ function oneVarClient(data) {
   const n = data.length;
   if (n < 2) return { error: 'Need at least 2 points' };
   const mean = data.reduce((a, b) => a + b, 0) / n;
-  const variance = data.reduce((s, x) => s + (x - mean) ** 2, 0) / n;
-  const std = Math.sqrt(variance);
-  const stdS = n > 1 ? Math.sqrt(data.reduce((s, x) => s + (x - mean) ** 2, 0) / (n - 1)) : 0;
+  const ss = data.reduce((s, x) => s + (x - mean) ** 2, 0); // sum of squared deviations
+  const variancePop = ss / n;           // σ² population
+  const varianceSamp = n > 1 ? ss / (n - 1) : 0; // s² sample
+  const stdPop = Math.sqrt(variancePop);
+  const stdSamp = Math.sqrt(varianceSamp);
+  const sorted = [...data].sort((a, b) => a - b);
+  const median = n % 2 ? sorted[Math.floor(n / 2)] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+  const q1 = sorted[Math.floor(n * 0.25)], q3 = sorted[Math.floor(n * 0.75)];
+  const iqr = q3 - q1;
   return {
-    n, mean, stdDev: std, stdDevS: stdS,
+    n, mean,
+    'σ (pop std)': stdPop, 's (sample std)': stdSamp,
+    'σ² (pop var)': variancePop, 's² (sample var)': varianceSamp,
     min: Math.min(...data), max: Math.max(...data),
-    median: (() => {
-      const s = [...data].sort((a, b) => a - b);
-      const m = Math.floor(n / 2);
-      return n % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-    })(),
-    sum: data.reduce((a, b) => a + b, 0),
+    median, Q1: q1, Q3: q3, IQR: iqr,
+    sum: data.reduce((a, b) => a + b, 0), 'Σ(x-x̄)²': ss,
   };
 }
 
@@ -389,8 +393,99 @@ function formatStats(obj) {
     .join('\n');
 }
 
+// --- AP Statistics: Probability & Tables ---
+function factorial(n) {
+  if (n < 0 || !Number.isInteger(n)) return NaN;
+  if (n <= 1) return 1;
+  let f = 1;
+  for (let i = 2; i <= n; i++) f *= i;
+  return f;
+}
+
+function nCr(n, r) {
+  if (r < 0 || r > n) return 0;
+  return factorial(n) / (factorial(r) * factorial(n - r));
+}
+
+function binomialP(n, p, x) {
+  if (x < 0 || x > n || p < 0 || p > 1) return null;
+  return nCr(n, x) * Math.pow(p, x) * Math.pow(1 - p, n - x);
+}
+
+function geometricP(p, x) {
+  if (x < 1 || p <= 0 || p > 1) return null;
+  return Math.pow(1 - p, x - 1) * p;
+}
+
+// Standard normal CDF (Abramowitz-Stegun approximation)
+function normalCDF(z) {
+  const b1 = 0.31938153, b2 = -0.356563782, b3 = 1.781477937, b4 = -1.821255978, b5 = 1.330274429;
+  const p = 0.2316419;
+  const phi = x => Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI);
+  const t = 1 / (1 + p * Math.abs(z));
+  const y = 1 - phi(z) * ((((b5 * t + b4) * t + b3) * t + b2) * t + b1) * t;
+  return z < 0 ? 1 - y : y;
+}
+
+// t critical values: df -> { '0.90': t*, '0.95': t*, '0.99': t* } (tail = (1-C)/2 for C confidence)
+const T_TABLE = {
+  1: { 0.90: 3.078, 0.95: 6.314, 0.99: 31.82 }, 2: { 0.90: 1.886, 0.95: 2.920, 0.99: 6.965 },
+  3: { 0.90: 1.638, 0.95: 2.353, 0.99: 4.541 }, 4: { 0.90: 1.533, 0.95: 2.132, 0.99: 3.747 },
+  5: { 0.90: 1.476, 0.95: 2.015, 0.99: 3.365 }, 6: { 0.90: 1.440, 0.95: 1.943, 0.99: 3.143 },
+  7: { 0.90: 1.415, 0.95: 1.895, 0.99: 2.998 }, 8: { 0.90: 1.397, 0.95: 1.860, 0.99: 2.896 },
+  9: { 0.90: 1.383, 0.95: 1.833, 0.99: 2.821 }, 10: { 0.90: 1.372, 0.95: 1.812, 0.99: 2.764 },
+  11: { 0.90: 1.363, 0.95: 1.796, 0.99: 2.718 }, 12: { 0.90: 1.356, 0.95: 1.782, 0.99: 2.681 },
+  15: { 0.90: 1.341, 0.95: 1.753, 0.99: 2.602 }, 20: { 0.90: 1.325, 0.95: 1.725, 0.99: 2.528 },
+  30: { 0.90: 1.310, 0.95: 1.697, 0.99: 2.457 }, 40: { 0.90: 1.303, 0.95: 1.684, 0.99: 2.423 },
+  50: { 0.90: 1.299, 0.95: 1.676, 0.99: 2.403 }, 60: { 0.90: 1.296, 0.95: 1.671, 0.99: 2.390 },
+  80: { 0.90: 1.292, 0.95: 1.664, 0.99: 2.374 }, 100: { 0.90: 1.290, 0.95: 1.660, 0.99: 2.364 },
+  inf: { 0.90: 1.282, 0.95: 1.645, 0.99: 2.326 },
+};
+
+// Chi-sq critical values: df -> { 0.10: val, 0.05: val, 0.01: val }
+const CHI_TABLE = {
+  1: { 0.10: 2.71, 0.05: 3.84, 0.01: 6.63 }, 2: { 0.10: 4.61, 0.05: 5.99, 0.01: 9.21 },
+  3: { 0.10: 6.25, 0.05: 7.81, 0.01: 11.34 }, 4: { 0.10: 7.78, 0.05: 9.49, 0.01: 13.28 },
+  5: { 0.10: 9.24, 0.05: 11.07, 0.01: 15.09 }, 6: { 0.10: 10.64, 0.05: 12.59, 0.01: 16.81 },
+  7: { 0.10: 12.02, 0.05: 14.07, 0.01: 18.48 }, 8: { 0.10: 13.36, 0.05: 15.51, 0.01: 20.09 },
+  9: { 0.10: 14.68, 0.05: 16.92, 0.01: 21.67 }, 10: { 0.10: 15.99, 0.05: 18.31, 0.01: 23.21 },
+  15: { 0.10: 22.31, 0.05: 25.00, 0.01: 30.58 }, 20: { 0.10: 28.41, 0.05: 31.41, 0.01: 37.57 },
+  30: { 0.10: 40.26, 0.05: 43.77, 0.01: 50.89 },
+};
+
+function chiSquareTest(observed, expected) {
+  if (observed.length !== expected.length || observed.length === 0) return { error: 'Observed and expected must be same length' };
+  let chi2 = 0;
+  for (let i = 0; i < observed.length; i++) {
+    if (expected[i] === 0) return { error: 'Expected values cannot be 0' };
+    chi2 += Math.pow(observed[i] - expected[i], 2) / expected[i];
+  }
+  return { chi2, df: observed.length - 1 };
+}
+
+function tLookup(df, conf) {
+  if (T_TABLE[df]) return T_TABLE[df][conf];
+  if (df >= 100) return T_TABLE.inf?.[conf];
+  const keys = Object.keys(T_TABLE).filter(k => k !== 'inf').map(Number);
+  const nearest = keys.reduce((a, b) => Math.abs(b - df) < Math.abs(a - df) ? b : a);
+  return T_TABLE[nearest]?.[conf];
+}
+
+function chiLookup(df, tail) {
+  if (CHI_TABLE[df]) return CHI_TABLE[df][tail];
+  const keys = Object.keys(CHI_TABLE).map(Number).filter(k => !isNaN(k));
+  const nearest = keys.reduce((a, b) => Math.abs(b - df) < Math.abs(a - df) ? b : a);
+  return CHI_TABLE[nearest]?.[tail];
+}
+
+function getList(num) {
+  const el = document.getElementById('listL' + num);
+  return el ? parseList(el.value) : [];
+}
+
 document.getElementById('btn1Var').addEventListener('click', async () => {
-  const data = parseList(document.getElementById('listL1').value);
+  const listNum = document.getElementById('list1Var').value;
+  const data = getList(listNum);
   let result = API_BASE ? await callAPI('/api/stats/1-var', { data }) : oneVarClient(data);
   if (result && result.error) result = { error: result.error };
   document.getElementById('statsResults').textContent = formatStats(result || oneVarClient(data));
@@ -398,19 +493,72 @@ document.getElementById('btn1Var').addEventListener('click', async () => {
 });
 
 document.getElementById('btn2Var').addEventListener('click', async () => {
-  const x = parseList(document.getElementById('listL1').value);
-  const y = parseList(document.getElementById('listL2').value);
+  const x = getList(document.getElementById('listX').value);
+  const y = getList(document.getElementById('listY').value);
   let result = API_BASE ? await callAPI('/api/stats/2-var', { x, y }) : twoVarClient(x, y);
   document.getElementById('statsResults').textContent = formatStats(result || twoVarClient(x, y));
   drawStatsPlot();
 });
 
 document.getElementById('btnLinReg').addEventListener('click', async () => {
-  const x = parseList(document.getElementById('listL1').value);
-  const y = parseList(document.getElementById('listL2').value);
+  const x = getList(document.getElementById('listX').value);
+  const y = getList(document.getElementById('listY').value);
   let result = API_BASE ? await callAPI('/api/stats/linreg', { x, y }) : linRegClient(x, y);
   document.getElementById('statsResults').textContent = formatStats(result || linRegClient(x, y));
   drawStatsPlot();
+});
+
+document.getElementById('btnChiSq').addEventListener('click', () => {
+  const observed = getList(document.getElementById('listObs').value);
+  const expected = getList(document.getElementById('listExp').value);
+  const result = chiSquareTest(observed, expected);
+  document.getElementById('statsResults').textContent = result.error || `χ² = ${result.chi2.toFixed(4)}\ndf = ${result.df}`;
+});
+
+document.getElementById('btnBinom').addEventListener('click', () => {
+  const n = parseInt(document.getElementById('binomN').value, 10);
+  const p = parseFloat(document.getElementById('binomP').value);
+  const x = parseInt(document.getElementById('binomX').value, 10);
+  const r = binomialP(n, p, x);
+  document.getElementById('statsResults').textContent = r == null ? 'Invalid: n≥1, 0≤p≤1, 0≤x≤n' : `Binomial P(X=${x}) = ${r.toFixed(6)}\nn=${n}, p=${p}`;
+});
+
+document.getElementById('btnGeom').addEventListener('click', () => {
+  const p = parseFloat(document.getElementById('geomP').value);
+  const x = parseInt(document.getElementById('geomX').value, 10);
+  const r = geometricP(p, x);
+  document.getElementById('statsResults').textContent = r == null ? 'Invalid: p in (0,1], x≥1' : `Geometric P(X=${x}) = ${r.toFixed(6)}\np=${p}`;
+});
+
+document.getElementById('btnZTable').addEventListener('click', () => {
+  const z = parseFloat(document.getElementById('zVal').value);
+  if (isNaN(z)) { document.getElementById('statsResults').textContent = 'Enter a z value'; return; }
+  const p = normalCDF(z);
+  document.getElementById('statsResults').textContent = `P(Z < ${z}) = ${p.toFixed(4)}\nP(Z > ${z}) = ${(1 - p).toFixed(4)}`;
+});
+
+document.getElementById('btnTTable').addEventListener('click', () => {
+  const df = parseInt(document.getElementById('tDf').value, 10);
+  const conf = document.getElementById('tConf').value;
+  const t = tLookup(df, conf);
+  document.getElementById('statsResults').textContent = t != null ? `t* (df=${df}, ${conf * 100}% confidence) = ${t.toFixed(3)}` : 'df not in table (1-100)';
+});
+
+document.getElementById('btnChiTable').addEventListener('click', () => {
+  const df = parseInt(document.getElementById('chiDf').value, 10);
+  const tail = parseFloat(document.getElementById('chiTail').value);
+  const chi = chiLookup(df, tail);
+  document.getElementById('statsResults').textContent = chi != null ? `χ²* (df=${df}, p=${tail}) = ${chi.toFixed(2)}` : 'df not in table (1-30)';
+});
+
+document.getElementById('btnCopyResults').addEventListener('click', () => {
+  const text = document.getElementById('statsResults').textContent;
+  navigator.clipboard?.writeText(text).then(() => {
+    const btn = document.getElementById('btnCopyResults');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
 });
 
 document.querySelectorAll('.plot-type .btn').forEach(btn => {
@@ -429,16 +577,17 @@ function drawStatsPlot() {
   const w = statsCanvas.width = statsCanvas.offsetWidth;
   const h = statsCanvas.height = statsCanvas.offsetHeight;
   statsCtx.clearRect(0, 0, w, h);
-  const x = parseList(document.getElementById('listL1').value);
-  const y = parseList(document.getElementById('listL2').value);
-  if (x.length === 0 && y.length === 0) return;
+  const x = getList(document.getElementById('listX')?.value || '1');
+  const y = getList(document.getElementById('listY')?.value || '2');
+  const histData = getList(document.getElementById('list1Var')?.value || '1');
+  if (x.length === 0 && y.length === 0 && histData.length === 0) return;
 
-  if (state.plotType === 'histogram' && x.length > 0) {
-    const min = Math.min(...x), max = Math.max(...x);
-    const bins = Math.min(10, Math.max(3, Math.ceil(Math.sqrt(x.length))));
+  if (state.plotType === 'histogram' && histData.length > 0) {
+    const min = Math.min(...histData), max = Math.max(...histData);
+    const bins = Math.min(10, Math.max(3, Math.ceil(Math.sqrt(histData.length))));
     const step = (max - min) / bins || 1;
     const counts = Array(bins).fill(0);
-    x.forEach(v => {
+    histData.forEach(v => {
       let i = Math.min(Math.floor((v - min) / step), bins - 1);
       if (i < 0) i = 0;
       counts[i]++;
