@@ -355,7 +355,7 @@ function linRegClient(x, y) {
   const meanY = sumY / n;
   const ssTot = y.reduce((s, yi) => s + (yi - meanY) ** 2, 0);
   const ssRes = y.reduce((s, yi, i) => s + (yi - (a * x[i] + b)) ** 2, 0);
-  const r = Math.sqrt(1 - ssRes / ssTot);
+  const r = ssTot > 0 ? Math.sqrt(Math.max(0, 1 - ssRes / ssTot)) : 0;
   return { a, b, r, r2: r * r, equation: `y = ${a.toFixed(4)}x + ${b.toFixed(4)}` };
 }
 
