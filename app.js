@@ -7,6 +7,7 @@ const API_BASE = typeof COSMOS_API !== 'undefined' ? COSMOS_API : '';
 const state = {
   expression: '',
   lastAnswer: 0,
+  ansStack: [],  // history of answers for Ans
   angleMode: 'RAD',
   xRange: [-10, 10],
   yRange: [-10, 10],
@@ -33,6 +34,7 @@ let statsCanvas, statsCtx;
 // --- DOM ---
 const exprDisplay = document.getElementById('exprDisplay');
 const resultDisplay = document.getElementById('resultDisplay');
+const ansIndicator = document.getElementById('ansIndicator');
 const graphCanvas = document.getElementById('graphCanvas');
 const traceTooltip = document.getElementById('traceTooltip');
 const coordDisplay = document.getElementById('coordDisplay');
@@ -110,7 +112,8 @@ function isGraphable(expr) {
 
 function updateDisplay() {
   exprDisplay.textContent = state.expression || '';
-  resultDisplay.textContent = state.expression ? '' : String(state.lastAnswer);
+  resultDisplay.textContent = state.expression ? '' : (state.ansStack.length ? String(state.ansStack[state.ansStack.length - 1]) : '0');
+  ansIndicator.textContent = state.ansStack.length ? `Ans = ${state.ansStack[state.ansStack.length - 1]}` : '';
 }
 
 function appendToExpr(v) {
@@ -119,15 +122,31 @@ function appendToExpr(v) {
 }
 
 function handleCalcAction(action) {
-  if (action === 'clear') { state.expression = ''; updateDisplay(); return; }
-  if (action === 'del') { state.expression = state.expression.slice(0, -1); updateDisplay(); return; }
-  if (action === 'ans') { appendToExpr(String(state.lastAnswer)); return; }
+  if (action === 'clear') {
+    state.expression = '';
+    resultDisplay.textContent = '0';
+    exprDisplay.textContent = '';
+    ansIndicator.textContent = state.ansStack.length ? `Ans = ${state.ansStack[state.ansStack.length - 1]}` : '';
+    return;
+  }
+  if (action === 'del') {
+    state.expression = state.expression.slice(0, -1);
+    updateDisplay();
+    return;
+  }
+  if (action === 'ans') {
+    const val = state.ansStack.length ? state.ansStack[state.ansStack.length - 1] : 0;
+    appendToExpr(String(val));
+    return;
+  }
   if (action === 'enter') {
     if (!state.expression.trim()) return;
     if (hasVariableX(state.expression)) return;
     const r = evaluateExpr(state.expression);
     if (r !== null && Number.isFinite(r)) {
       state.lastAnswer = r;
+      state.ansStack.push(r);
+      if (state.ansStack.length > 20) state.ansStack.shift();
       state.expression = String(r);
     } else state.expression = 'Error';
     updateDisplay();
@@ -815,8 +834,8 @@ document.addEventListener('keydown', e => {
   const mode = document.querySelector('.tab.active')?.dataset?.mode;
   if (mode === 'calc') {
     if (e.key === 'Enter') { e.preventDefault(); handleCalcAction('enter'); return; }
-    if (e.key === 'Backspace') { e.preventDefault(); handleCalcAction('del'); return; }
-    if (e.key === 'Escape') { handleCalcAction('clear'); return; }
+    if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); handleCalcAction('del'); return; }
+    if (e.key === 'Escape') { e.preventDefault(); handleCalcAction('clear'); return; }
     const action = CALC_KEY_MAP[e.key];
     if (action) { e.preventDefault(); handleCalcAction(action); return; }
   }

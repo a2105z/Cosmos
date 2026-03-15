@@ -136,6 +136,15 @@ body {
   align-items: flex-end;
 }
 
+.ans-indicator {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  min-height: 16px;
+  width: 100%;
+  text-align: right;
+}
+
 .expr-display {
   font-family: var(--font-mono);
   font-size: 0.9rem;
