@@ -225,12 +225,105 @@ function plotFunction(expr, color) {
   ctx.stroke();
 }
 
+function findRoot(f, xLo, xHi, tol = 1e-8) {
+  const fLo = f(xLo), fHi = f(xHi);
+  if (Math.abs(fLo) < tol) return xLo;
+  if (Math.abs(fHi) < tol) return xHi;
+  if (fLo * fHi > 0) return null;
+  for (let i = 0; i < 50; i++) {
+    const xMid = (xLo + xHi) / 2;
+    const fMid = f(xMid);
+    if (Math.abs(fMid) < tol) return xMid;
+    if (fMid * fLo < 0) { xHi = xMid; } else { xLo = xMid; }
+  }
+  return (xLo + xHi) / 2;
+}
+
+function findRootsInRange(expr, xMin, xMax, nSamples = 200) {
+  if (!hasVariableX(expr)) return [];
+  const roots = [];
+  const dx = (xMax - xMin) / nSamples;
+  const f = x => (evaluateExpr(expr, x) || 0);
+  for (let i = 0; i < nSamples; i++) {
+    const x1 = xMin + i * dx, x2 = xMin + (i + 1) * dx;
+    const y1 = f(x1), y2 = f(x2);
+    if (y1 * y2 <= 0 && (y1 !== 0 || y2 !== 0)) {
+      const root = findRoot(f, x1, x2);
+      if (root !== null) roots.push(root);
+    }
+  }
+  return roots.filter((r, i, a) => a.findIndex(x => Math.abs(x - r) < 1e-6) === i);
+}
+
+function findIntersections(expr1, expr2, xMin, xMax, nSamples = 300) {
+  if (!hasVariableX(expr1) || !hasVariableX(expr2)) return [];
+  const diff = x => {
+    const y1 = evaluateExpr(expr1, x), y2 = evaluateExpr(expr2, x);
+    if (y1 == null || y2 == null || !Number.isFinite(y1) || !Number.isFinite(y2)) return 0;
+    return y1 - y2;
+  };
+  const pts = [];
+  const dx = (xMax - xMin) / nSamples;
+  for (let i = 0; i < nSamples; i++) {
+    const x1 = xMin + i * dx, x2 = xMin + (i + 1) * dx;
+    const d1 = diff(x1), d2 = diff(x2);
+    if (d1 * d2 <= 0 && (d1 !== 0 || d2 !== 0)) {
+      const x = findRoot(diff, x1, x2);
+      if (x !== null) {
+        const y = evaluateExpr(expr1, x);
+        if (y != null && Number.isFinite(y)) pts.push({ x, y });
+      }
+    }
+  }
+  return pts.filter((p, i, a) => a.findIndex(q => Math.abs(q.x - p.x) < 1e-5) === i);
+}
+
+function drawPoints(points, color, label) {
+  if (!points.length) return;
+  ctx.font = '10px "IBM Plex Mono"';
+  ctx.textAlign = 'left';
+  points.forEach(({ x, y }) => {
+    const px = mapX(x), py = mapY(y);
+    if (px < -20 || px > canvasWidth + 20 || py < -20 || py > canvasHeight + 20) return;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
 function redraw() {
   drawGrid();
+  const exprs = [];
   document.querySelectorAll('.func-input').forEach((input, i) => {
     const expr = input.value.trim();
-    if (expr && isGraphable(expr)) plotFunction(expr, GRAPH_COLORS[i % GRAPH_COLORS.length]);
+    if (expr && isGraphable(expr)) {
+      exprs.push({ expr, color: GRAPH_COLORS[i % GRAPH_COLORS.length] });
+      plotFunction(expr, GRAPH_COLORS[i % GRAPH_COLORS.length]);
+    }
   });
+  const [xMin, xMax] = state.xRange, [yMin, yMax] = state.yRange;
+  const interceptColor = 'rgba(255, 255, 255, 0.9)';
+  exprs.forEach(({ expr, color }) => {
+    if (!hasVariableX(expr)) return;
+    const y0 = evaluateExpr(expr, 0);
+    if (y0 != null && Number.isFinite(y0) && y0 >= yMin && y0 <= yMax) {
+      drawPoints([{ x: 0, y: y0 }], interceptColor, '(0, y)');
+    }
+    const roots = findRootsInRange(expr, xMin, xMax);
+    roots.forEach(x => drawPoints([{ x, y: 0 }], interceptColor));
+  });
+  for (let i = 0; i < exprs.length; i++) {
+    for (let j = i + 1; j < exprs.length; j++) {
+      const pts = findIntersections(exprs[i].expr, exprs[j].expr, xMin, xMax);
+      pts.forEach(p => {
+        if (p.y >= yMin && p.y <= yMax) drawPoints([p], '#ffd700', 'int');
+      });
+    }
+  }
 }
 
 function setupGraphCanvas() {
@@ -298,14 +391,38 @@ function setupGraphCanvas() {
   canvas.addEventListener('mouseup', e => { if (e.button === 0) state.isPanning = false; });
   canvas.addEventListener('wheel', e => {
     e.preventDefault();
-    const f = e.deltaY > 0 ? 1.1 : 0.9;
     const [xMin, xMax] = state.xRange, [yMin, yMax] = state.yRange;
-    const cx = (xMin + xMax) / 2, cy = (yMin + yMax) / 2;
-    const hw = (xMax - xMin) * f / 2, hh = (yMax - yMin) * f / 2;
-    state.xRange = [cx - hw, cx + hw];
-    state.yRange = [cy - hh, cy + hh];
+    const rangeW = xMax - xMin, rangeH = yMax - yMin;
+    const panAmount = 0.12;
+    if (e.ctrlKey || e.metaKey) {
+      const f = e.deltaY > 0 ? 1.1 : 0.9;
+      const cx = (xMin + xMax) / 2, cy = (yMin + yMax) / 2;
+      state.xRange = [cx - rangeW * f / 2, cx + rangeW * f / 2];
+      state.yRange = [cy - rangeH * f / 2, cy + rangeH * f / 2];
+    } else if (e.shiftKey) {
+      const dx = (e.deltaY > 0 ? panAmount : -panAmount) * rangeW;
+      state.xRange = [xMin + dx, xMax + dx];
+    } else {
+      const dy = (e.deltaY > 0 ? -panAmount : panAmount) * rangeH;
+      state.yRange = [yMin + dy, yMax + dy];
+    }
     redraw();
   }, { passive: false });
+  canvas.setAttribute('tabindex', '0');
+  canvas.addEventListener('keydown', e => {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+    e.preventDefault();
+    const [xMin, xMax] = state.xRange, [yMin, yMax] = state.yRange;
+    const rangeW = xMax - xMin, rangeH = yMax - yMin;
+    const step = 0.2;
+    if (e.key === 'ArrowLeft') { state.xRange = [xMin - step * rangeW, xMax - step * rangeW]; }
+    else if (e.key === 'ArrowRight') { state.xRange = [xMin + step * rangeW, xMax + step * rangeW]; }
+    else if (e.key === 'ArrowUp') { state.yRange = [yMin + step * rangeH, yMax + step * rangeH]; }
+    else if (e.key === 'ArrowDown') { state.yRange = [yMin - step * rangeH, yMax - step * rangeH]; }
+    redraw();
+  });
+  canvas.addEventListener('focus', () => canvas.classList.add('graph-focused'));
+  canvas.addEventListener('blur', () => canvas.classList.remove('graph-focused'));
 }
 
 document.querySelectorAll('.func-input').forEach(input => {
@@ -686,12 +803,26 @@ angleModeBtn.addEventListener('click', () => {
   angleModeBtn.textContent = state.angleMode;
 });
 
-// --- Keyboard ---
+// --- Calculator keyboard ---
+const CALC_KEY_MAP = {
+  '0': '0', '1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
+  '+': '+', '-': '-', '*': '*', '/': '/', '.': '.', '(': '(', ')': ')', '^': '^',
+  'x': 'x', 'X': 'x', 'e': 'e', 'E': 'e',
+};
+
 document.addEventListener('keydown', e => {
   if (e.target.matches('input, textarea')) return;
-  if (e.key === 'Enter') { e.preventDefault(); handleCalcAction('enter'); }
-  else if (e.key === 'Backspace') { e.preventDefault(); handleCalcAction('del'); }
-  else if (e.key === 'Escape') handleCalcAction('clear');
+  const mode = document.querySelector('.tab.active')?.dataset?.mode;
+  if (mode === 'calc') {
+    if (e.key === 'Enter') { e.preventDefault(); handleCalcAction('enter'); return; }
+    if (e.key === 'Backspace') { e.preventDefault(); handleCalcAction('del'); return; }
+    if (e.key === 'Escape') { handleCalcAction('clear'); return; }
+    const action = CALC_KEY_MAP[e.key];
+    if (action) { e.preventDefault(); handleCalcAction(action); return; }
+  }
+  if (mode === 'graph' && document.activeElement?.id === 'graphCanvas') {
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) e.preventDefault();
+  }
 });
 
 // --- Init ---

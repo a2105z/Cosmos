@@ -235,6 +235,11 @@ body {
   min-height: 380px;
   display: block;
   cursor: crosshair;
+  outline: none;
+}
+
+#graphCanvas:focus, #graphCanvas.graph-focused {
+  box-shadow: inset 0 0 0 2px var(--accent);
 }
 
 .trace-tooltip {
@@ -255,6 +260,15 @@ body {
 }
 
 .trace-tooltip.hidden { display: none; }
+
+.graph-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  font-size: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
 
 .coord-display {
   position: absolute;
